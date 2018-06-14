@@ -1,11 +1,12 @@
 'use strict';
 
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const localStrategy = require('./passport/local');
-
+const jwtStrategy = require('./passport/jwt');
 const { PORT, MONGODB_URI } = require('./config');
 
 const notesRouter = require('./routes/notes');
@@ -17,6 +18,22 @@ const authRouter = require('./routes/auth');
 // Create an Express application
 const app = express();
 
+
+['log', 'warn', 'error'].forEach(function(method) {
+  var old = console[method];
+  console[method] = function() {
+    var stack = (new Error()).stack.split(/\n/);
+    // Chrome includes a single "Error" line, FF doesn't.
+    if (stack[0].indexOf('Error') === 0) {
+      stack = stack.slice(1);
+    }
+    var date = new Date();
+    var datetime = date.toLocaleString('en-US');
+    var args = [].slice.apply(arguments).concat([stack[1].trim()]);
+    args.unshift(datetime);
+    return old.apply(console, args);
+  };
+});
 // Log all requests. Skip logging during
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
   skip: () => process.env.NODE_ENV === 'test'
@@ -40,6 +57,7 @@ app.use('/api', authRouter);
 
 //use passport
 passport.use(localStrategy);
+passport.use(jwtStrategy);
 
 // Custom 404 Not Found route handler
 app.use((req, res, next) => {
@@ -50,6 +68,7 @@ app.use((req, res, next) => {
 
 // Custom Error Handler
 app.use((err, req, res, next) => {
+  //console.log(err);
   if (err.status) {
     const errBody = Object.assign({}, err, { message: err.message });
     res.status(err.status).json(errBody);

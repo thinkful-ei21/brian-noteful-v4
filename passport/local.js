@@ -17,10 +17,11 @@ const localStrategy = new LocalStrategy((username, password, done) => {
         });
         
       }
-      return User.validatePassword(password);
+      console.log(username, password); 
+      return user.validatePassword(password);
     })
     .then(isValid => {
-      
+      console.log(isValid);
       if (!isValid) {
         return Promise.reject({
           reason: 'LoginError',

@@ -13,10 +13,7 @@ router.post('/users', (req, res, next) => {
   
   const {fullname,username, password} = req.body;
   const newUser = {fullname,username, password};
-  Users.create(newUser)
-    .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
-    });
+ 
   return Users.hashPassword(password)
     .then(digest => {
       const newUser = {
@@ -36,6 +33,12 @@ router.post('/users', (req, res, next) => {
       }
       next(err);
     });
+});
+
+router.get('/', (req, res) => {
+  return Users.find()
+    .then(users => res.json(users.map(user => user.serialize())))
+    .catch(err => res.status(500).json({message: 'Internal server error'}));
 });
 
 
