@@ -13,7 +13,7 @@ router.use('/', passport.authenticate('jwt', {session:false, failWithError:true 
 router.get('/', (req, res, next) => {
   const userId = req.user.id;
 
-  Tag.find()
+  Tag.find({userId})
     .sort('name')
     .then(results => {
       res.json(results);
@@ -141,6 +141,6 @@ router.delete('/:id', (req, res, next) => {
 
 });
 
-router.use('/', passport.authenticate('jwt', { session: false, failWithError: true }));
+
 
 module.exports = router;

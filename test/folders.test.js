@@ -16,7 +16,7 @@ const {JWT_SECRET, JWT_EXPIRY} = require('../config');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe.only('Noteful API - Folders', function () {
+describe('Noteful API - Folders', function () {
 
   before(function () {
     return mongoose.connect(TEST_MONGODB_URI)
