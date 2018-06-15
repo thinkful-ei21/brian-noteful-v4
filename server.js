@@ -19,21 +19,21 @@ const authRouter = require('./routes/auth');
 const app = express();
 
 
-['log', 'warn', 'error'].forEach(function(method) {
-  var old = console[method];
-  console[method] = function() {
-    var stack = (new Error()).stack.split(/\n/);
-    // Chrome includes a single "Error" line, FF doesn't.
-    if (stack[0].indexOf('Error') === 0) {
-      stack = stack.slice(1);
-    }
-    var date = new Date();
-    var datetime = date.toLocaleString('en-US');
-    var args = [].slice.apply(arguments).concat([stack[1].trim()]);
-    args.unshift(datetime);
-    return old.apply(console, args);
-  };
-});
+// ['log', 'warn', 'error'].forEach(function(method) {
+//   var old = console[method];
+//   console[method] = function() {
+//     var stack = (new Error()).stack.split(/\n/);
+//     // Chrome includes a single "Error" line, FF doesn't.
+//     if (stack[0].indexOf('Error') === 0) {
+//       stack = stack.slice(1);
+//     }
+//     var date = new Date();
+//     var datetime = date.toLocaleString('en-US');
+//     var args = [].slice.apply(arguments).concat([stack[1].trim()]);
+//     args.unshift(datetime);
+//     return old.apply(console, args);
+//   };
+// });
 // Log all requests. Skip logging during
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
   skip: () => process.env.NODE_ENV === 'test'

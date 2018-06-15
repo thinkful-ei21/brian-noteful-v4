@@ -9,6 +9,51 @@ const Tag = require('../models/tag');
 const router = express.Router();
 
 router.use('/', passport.authenticate('jwt', {session:false, failWithError:true  }));
+
+function validateFolderId(folderId, userId){
+
+  if (folderId === undefined) {
+    return Promise.resolve();
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(folderId)) {
+    const err = new Error('The `folderId` is not valid');
+    err.status = 400;
+    return Promise.reject(err);
+  }
+
+  return Folder.count({_id:folderId, userId})
+    .then(count => {
+      if (count === 0) {
+        const err = new Error('The `folderId` is not valid');
+        err.status = 400;
+        return Promise.reject(err);
+      }
+    });
+}
+
+function validateTagIds(tags, userId){
+
+  if (tags === undefined) {
+    return Promise.resolve();
+  }
+
+  if (!Array.isArray(tags)) {
+    const err = new Error('The `tags` is not an array');
+    err.status = 400;
+    return Promise.reject(err);
+  }
+
+  return Tag.find({ $and: [{ _id: { $in: tags }, userId }] })
+    .then(results => {
+      if (tags.length !== results.length) {
+        const err = new Error('The `tags` is not valid');
+        err.status = 400;
+        return Promise.reject(err);
+      }
+    });
+}
+
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
   const { searchTerm, folderId, tagId} = req.query;
@@ -102,42 +147,10 @@ router.post('/', (req, res, next) => {
   //   return next(err);
   // }
   
-  function validateFolderId(folderId, userId) {
-    if (folderId === undefined) {
-      return Promise.resolve();
-    }
-    if (!mongoose.Types.ObjectId.isValid(folderId)) {
-      const err = new Error('The `folderId` is not valid');
-      err.status = 400;
-      return Promise.reject(err);
-    }
-    return Folder.count({ _id: folderId, userId })
-      .then(count => {
-        if (count === 0) {
-          const err = new Error('The `folderId` is not valid');
-          err.status = 400;
-          return Promise.reject(err);
-        }
-      });
-  }
-  function validateTagIds(tags, userId) {
-    if (tags === undefined) {
-      return Promise.resolve();
-    }
-    if (!Array.isArray(tags)) {
-      const err = new Error('The `tags` must be an array');
-      err.status = 400;
-      return Promise.reject(err);
-    }
-    return Tag.find({ $and: [{ _id: { $in: tags }, userId }] })
-      .then(results => {
-        if (tags.length !== results.length) {
-          const err = new Error('The `tags` array contains an invalid id');
-          err.status = 400;
-          return Promise.reject(err);
-        }
-      });
-  }
+  Promise.all([
+    validateFolderId(folderId, userId),
+    validateTagIds(tags, userId)
+  ]);
 
 
   const newNote = { title, content, folderId, tags, userId };
@@ -189,6 +202,12 @@ router.put('/:id', (req, res, next) => {
 
   const updateNote = { title, content, folderId, tags, userId };
 
+  Promise.all([
+    validateFolderId(folderId, userId),
+    validateTagIds(tags, userId)
+  ]);
+
+  
   Note.findOneAndUpdate({_id: id, userId}, { new: true })
     .then(result => {
       if (result) {
